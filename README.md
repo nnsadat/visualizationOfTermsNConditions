@@ -1,2 +1,2 @@
 ### visualizationOfTermsNConditions
-non-parametric tests
+non-parametric tests, R
