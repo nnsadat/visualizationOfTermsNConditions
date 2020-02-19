@@ -1,0 +1,191 @@
+---
+title: "Visualization of Terms & Conditions and Privacy Policies"
+output: html_document
+---
+
+```{r include=FALSE}
+library(dplyr)
+library(knitr)
+library(tidyr)
+library(ggplot2)
+library(pander)
+```
+
+
+
+###The data we collected looked as follows:
+```{r echo=FALSE}
+data <- read.csv("C:/Users/User/Desktop/889/project/statanalysis.csv")
+kable(data)
+```
+
+
+###Dependent variables
+1. time - Time taken by participants to read our T&Cs and PPs
+2. score - Score based on answers of participants for the 8 questions  
+
+###Independent variables
+####Main Independent Variable
+Condition - Original (1), Summarized (2) and Visualization (3)  
+
+####Candidate Independent Variables  
+1. ER - Ever read full T&Cs and PPs? (Yes = 1, No = 2)  
+2. ES - Ever skimmed through full T&Cs and PPs? (Yes = 1, No = 2)  
+3. difficulty - Difficulty of T&Cs and PPs in general (rated in a scale of 5)  
+4. age - Age of participants (the mean of the ranges were used here)  
+5. native - Native speaker of English? (Yes = 1, No = 2)  
+6. skill - Participants' own rating of their skill in English (rated in a scale of 5)  
+7. confidence - Participants' confidence of understanding our T&Cs and PPs (rated in a scale of 5)  
+8. readability - Participants' ratings of readability of our T&Cs and PPs (rated in a scale of 5)
+
+###Aggregation of dependent variables (time, score) by condition
+
+```{r echo=FALSE}
+conditionVsDV <- data %>%
+  group_by(condition) %>%
+  summarise(meanOfScore=mean(score), sdOfScore=sd(score),meanOfTime=mean(time), sdOfTime=sd(time))
+kable(conditionVsDV)
+```
+
+Although participants in the visualization condition scored higher than the other two conditions, participants in the summarized condition unexpectedly scored less than those in the original condition. Moreover, we found that participants took longer time to read the clauses in the visualization condition compared to the other two conditions. Since the mean time and mean score still showed some difference across conditions, we performed statistical analysis to see if there is any significant effect of condition on either of them. 
+
+###Normality checking for time data 
+####Density plot 
+```{r echo=FALSE}
+fill <- "#4271AE"
+line <- "#1F3552"
+
+ggplot(data, aes(x = time)) +
+        geom_density(fill = fill, colour = line,
+                     alpha = 0.6) + scale_x_continuous(name = "Time (in seconds)") +
+        scale_y_continuous(name = "Density") + theme_bw()
+```
+
+  
+    
+      
+      
+
+####Shapiro-Wilk test
+
+```{r echo=FALSE}
+out<-shapiro.test(data$time)
+pander(out)
+```
+
+###Normality checking for score data 
+####Density plot 
+```{r echo=FALSE}
+ggplot(data, aes(x = score)) +
+        geom_density(fill = fill, colour = line,
+                     alpha = 0.6) + scale_x_continuous(name = "Score (out of 8)") +
+        scale_y_continuous(name = "Density") + theme_bw()
+```
+
+####Shapiro-Wilk test
+```{r echo=FALSE}
+out<-shapiro.test(data$score)
+pander(out)
+```
+
+It looks like neither time nor score data follows normal distribution so we will have to use non-parametric test for our experiment. Since ours is a between subject experiment, we performed the Kruskal Wallis test.
+
+###Kruskal Wallis for time with condition as independent variable
+```{r echo=FALSE}
+out<-kruskal.test(time ~ condition, data = data)
+pander(out)
+```
+
+###Kruskal Wallis for score with condition as independent variable
+```{r echo=FALSE}
+out<-kruskal.test(score ~ condition, data = data)
+pander(out)
+```
+
+No significant effect of condition on either time (p.value = 0.4025) or score (p.value = 0.4512) was found. 
+
+###Aggregation of dependent variables (time, score) by the candidate independent variables
+Condition is our main independent variable so all other variables are tested in combination with the condition variable
+```{r echo=FALSE}
+ERVsDV <- data %>%
+  group_by(condition, ER) %>%
+  summarise(meanOfScore=mean(score), sdOfScore=sd(score),meanOfTime=mean(time), sdOfTime=sd(time))
+kable(ERVsDV)
+
+ESVsDV <- data %>%
+  group_by(condition, ES) %>%
+  summarise(meanOfScore=mean(score), sdOfScore=sd(score),meanOfTime=mean(time), sdOfTime=sd(time))
+kable(ESVsDV)
+
+difficultyVsDV <- data %>%
+  group_by(condition, difficulty) %>%
+  summarise(meanOfScore=mean(score), sdOfScore=sd(score),meanOfTime=mean(time), sdOfTime=sd(time))
+kable(difficultyVsDV)
+
+
+ageVsDV <- data %>%
+  group_by(condition, age) %>%
+  summarise(meanOfScore=mean(score), sdOfScore=sd(score),meanOfTime=mean(time), sdOfTime=sd(time))
+kable(ageVsDV)
+
+nativeVsDV <- data %>%
+  group_by(condition, native) %>%
+  summarise(meanOfScore=mean(score), sdOfScore=sd(score),meanOfTime=mean(time), sdOfTime=sd(time))
+kable(nativeVsDV)
+
+skillVsDV <- data %>%
+  group_by(condition, skill) %>%
+  summarise(meanOfScore=mean(score), sdOfScore=sd(score),meanOfTime=mean(time), sdOfTime=sd(time))
+kable(skillVsDV)
+
+confidenceVsDV <- data %>%
+  group_by(condition, confidence) %>%
+  summarise(meanOfScore=mean(score), sdOfScore=sd(score),meanOfTime=mean(time), sdOfTime=sd(time))
+kable(confidenceVsDV)
+
+readabilityVsDV <- data %>%
+  group_by(condition, readability) %>%
+  summarise(meanOfScore=mean(score), sdOfScore=sd(score),meanOfTime=mean(time), sdOfTime=sd(time))
+kable(readabilityVsDV)
+
+```
+
+Out of all the candidate variables, we checked the "native" and "ER" variables and their interactions with "condition" variable to see if they had any affect on score or time. We specifically chose these two variables because we found that those with ER=1 took less time and scored better, and those with native=1 took less time compared to others within the same condition.  
+
+###Kruskal Wallis for time with conditionxnative as independent variable
+```{r echo=FALSE}
+conditionNativedata<-data[c("condition", "native","time")]
+conditionNativedata<-unite(conditionNativedata, "condition_native", c("condition","native"))
+conditionNativedata$condition_native<-as.factor(conditionNativedata$condition_native)
+out<-kruskal.test(time ~ condition_native, data = conditionNativedata)
+pander(out)
+```
+
+###Kruskal Wallis for time with conditionxER as independent variable
+```{r echo=FALSE}
+conditionERdata<-data[c("condition", "ER","time")]
+conditionERdata<-unite(conditionERdata, "condition_ER", c("condition","ER"))
+conditionERdata$condition_ER<-as.factor(conditionERdata$condition_ER)
+out<-kruskal.test(time ~ condition_ER, data = conditionERdata)
+pander(out)
+```
+
+###Kruskal Wallis for score with conditionxnative as independent variable
+```{r echo=FALSE}
+conditionNativedata<-data[c("condition", "native","score")]
+conditionNativedata<-unite(conditionNativedata, "condition_native", c("condition","native"))
+conditionNativedata$condition_native<-as.factor(conditionNativedata$condition_native)
+out<-kruskal.test(score ~ condition_native, data = conditionNativedata)
+pander(out)
+```
+
+###Kruskal Wallis for score with conditionxER as independent variable
+```{r echo=FALSE}
+conditionERdata<-data[c("condition", "ER","score")]
+conditionERdata<-unite(conditionERdata, "condition_ER", c("condition","ER"))
+conditionERdata$condition_ER<-as.factor(conditionERdata$condition_ER)
+out<-kruskal.test(score ~ condition_ER, data = conditionERdata)
+pander(out)
+```
+
+For both time and score, we found no significant effect of conditionxnative, or conditionxER.
